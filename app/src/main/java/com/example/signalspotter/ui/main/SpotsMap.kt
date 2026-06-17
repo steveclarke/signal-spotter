@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.content.ContextCompat
+import com.example.signalspotter.R
 import com.example.signalspotter.data.LoggedSpot
 import com.example.signalspotter.data.TrackPoint
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -64,10 +66,12 @@ fun SpotsMap(
         }
       )
     }
+    val pinIcon = ContextCompat.getDrawable(context, R.drawable.ic_map_pin)
     spots.forEach { s ->
       mapView.overlays.add(
         Marker(mapView).apply {
           position = GeoPoint(s.latitude, s.longitude)
+          icon = pinIcon
           setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
           title = "${s.carrier} · ±${s.accuracyMeters.toInt()} m"
         }

@@ -10,6 +10,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
   val spots = repository.spots
   val isLogging = repository.isLogging
+  val debug = repository.debug
 
   fun startLogging() = SignalLoggerService.start(getApplication())
 

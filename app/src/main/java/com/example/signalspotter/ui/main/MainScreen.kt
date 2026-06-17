@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -28,10 +29,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.signalspotter.data.DebugStatus
 import com.example.signalspotter.data.LoggedSpot
 import com.example.signalspotter.export.shareSpotsAsGpx
 import java.time.Instant
@@ -44,6 +47,7 @@ fun MainScreen(modifier: Modifier = Modifier, viewModel: MainViewModel = viewMod
   val context = LocalContext.current
   val spots by viewModel.spots.collectAsStateWithLifecycle()
   val isLogging by viewModel.isLogging.collectAsStateWithLifecycle()
+  val debug by viewModel.debug.collectAsStateWithLifecycle()
 
   val permissions = remember { requiredPermissions() }
   var pendingStart by remember { mutableStateOf(false) }
@@ -85,6 +89,8 @@ fun MainScreen(modifier: Modifier = Modifier, viewModel: MainViewModel = viewMod
       Text(if (isLogging) "Stop logging" else "Start logging")
     }
 
+    if (isLogging) DebugCard(debug)
+
     Row(verticalAlignment = Alignment.CenterVertically) {
       Text(
         text = "${spots.size} ${if (spots.size == 1) "spot" else "spots"}",
@@ -112,6 +118,47 @@ fun MainScreen(modifier: Modifier = Modifier, viewModel: MainViewModel = viewMod
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
           items(spots.reversed()) { spot -> SpotRow(spot) }
         }
+    }
+  }
+}
+
+@Composable
+private fun DebugCard(d: DebugStatus) {
+  Card(
+    modifier = Modifier.fillMaxWidth(),
+    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+  ) {
+    Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+      Text(
+        "LIVE STATUS",
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+      )
+      val cell =
+        when (d.inService) {
+          true ->
+            "in service" +
+              if (d.carrier.isNotBlank() && d.carrier != "Unknown") " · ${d.carrier}" else ""
+          false -> "NO SERVICE"
+          null -> "—"
+        }
+      Text("cell:    $cell", fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodyMedium)
+      val gps =
+        if (d.lastLat != null && d.lastLon != null)
+          String.format(
+            Locale.US,
+            "%.5f, %.5f  ±%dm",
+            d.lastLat,
+            d.lastLon,
+            (d.lastAccuracyM ?: 0f).toInt(),
+          )
+        else "waiting for GPS fix…"
+      Text("gps:     $gps", fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
+      Text(
+        "changes: ${d.serviceStateChanges}   (each NO→in-service logs a spot)",
+        fontFamily = FontFamily.Monospace,
+        style = MaterialTheme.typography.bodySmall,
+      )
     }
   }
 }

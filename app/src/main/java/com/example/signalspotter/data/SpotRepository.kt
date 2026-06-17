@@ -23,6 +23,9 @@ class SpotRepository(context: Context) {
   private val _isLogging = MutableStateFlow(false)
   val isLogging: StateFlow<Boolean> = _isLogging.asStateFlow()
 
+  private val _debug = MutableStateFlow(DebugStatus())
+  val debug: StateFlow<DebugStatus> = _debug.asStateFlow()
+
   init {
     _spots.value =
       runCatching {
@@ -47,4 +50,40 @@ class SpotRepository(context: Context) {
   fun setLogging(logging: Boolean) {
     _isLogging.value = logging
   }
+
+  fun onLocation(lat: Double, lon: Double, accuracyM: Float, atMillis: Long) {
+    _debug.value =
+      _debug.value.copy(
+        lastLat = lat,
+        lastLon = lon,
+        lastAccuracyM = accuracyM,
+        lastFixAtMillis = atMillis,
+      )
+  }
+
+  /** Call only on a genuine service-state change. */
+  fun onServiceStateChange(inService: Boolean, carrier: String) {
+    val d = _debug.value
+    _debug.value =
+      d.copy(
+        inService = inService,
+        carrier = carrier,
+        serviceStateChanges = d.serviceStateChanges + 1,
+      )
+  }
+
+  fun resetDebug() {
+    _debug.value = DebugStatus()
+  }
 }
+
+/** Live telemetry for the in-app debug panel (not persisted). */
+data class DebugStatus(
+  val inService: Boolean? = null,
+  val carrier: String = "",
+  val lastLat: Double? = null,
+  val lastLon: Double? = null,
+  val lastAccuracyM: Float? = null,
+  val lastFixAtMillis: Long? = null,
+  val serviceStateChanges: Int = 0,
+)

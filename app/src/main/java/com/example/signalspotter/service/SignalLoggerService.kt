@@ -40,7 +40,16 @@ class SignalLoggerService : Service() {
   private var inService: Boolean = true
   private var firstStateSeen: Boolean = false
 
-  private val locationListener = LocationListener { location -> lastLocation = location }
+  private val locationListener =
+    LocationListener { location ->
+      lastLocation = location
+      repository.onLocation(
+        location.latitude,
+        location.longitude,
+        location.accuracy,
+        System.currentTimeMillis(),
+      )
+    }
 
   private val repository
     get() = (application as SignalSpotterApp).repository
@@ -54,6 +63,7 @@ class SignalLoggerService : Service() {
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     startForeground(NOTIFICATION_ID, buildNotification())
     repository.setLogging(true)
+    repository.resetDebug()
     startLocationUpdates()
     startTelephonyMonitoring()
     return START_STICKY
@@ -123,20 +133,24 @@ class SignalLoggerService : Service() {
     if (!firstStateSeen) {
       firstStateSeen = true
       inService = nowInService
+      repository.onServiceStateChange(nowInService, carrierName())
       return
     }
-    if (nowInService && !inService) {
-      logCurrentSpot()
+    if (nowInService != inService) {
+      repository.onServiceStateChange(nowInService, carrierName())
+      if (nowInService) logCurrentSpot()
     }
     inService = nowInService
   }
 
+  private fun carrierName(): String =
+    runCatching { telephonyManager.networkOperatorName }
+      .getOrNull()
+      ?.takeIf { it.isNotBlank() } ?: "Unknown"
+
   private fun logCurrentSpot() {
     val loc = lastLocation ?: return
-    val carrier =
-      runCatching { telephonyManager.networkOperatorName }
-        .getOrNull()
-        ?.takeIf { it.isNotBlank() } ?: "Unknown"
+    val carrier = carrierName()
     repository.add(
       LoggedSpot(
         timestampMillis = System.currentTimeMillis(),

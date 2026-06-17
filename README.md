@@ -49,4 +49,12 @@ The APK lands at `app/build/outputs/apk/debug/app-debug.apk`.
 
 Proof of concept. Phases 1 and 2 are built: regain-signal logging, the spot
 list, GPX export/share, and an in-app OpenStreetMap (osmdroid) view with a
-List/Map toggle. Not yet field-tested on a real device.
+List/Map toggle.
+
+**Verified** on an Android 16 (API 36) emulator: clean launch, permission flow,
+and the foreground-service-location starts and runs without error (UI flips to
+the logging state, location indicator active).
+
+**Still to field-test on a real phone** (needs real cell conditions, can't be
+simulated on an emulator): an actual no-service → in-service transition produces
+a logged spot, the GPX share sheet, and map tiles rendering over wifi.

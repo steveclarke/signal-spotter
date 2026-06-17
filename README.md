@@ -47,5 +47,6 @@ The APK lands at `app/build/outputs/apk/debug/app-debug.apk`.
 
 ## Status
 
-Proof of concept. Phase 1 (logging + list + GPX export) is the current build.
-Phase 2 adds an in-app OpenStreetMap view of the logged spots.
+Proof of concept. Phases 1 and 2 are built: regain-signal logging, the spot
+list, GPX export/share, and an in-app OpenStreetMap (osmdroid) view with a
+List/Map toggle. Not yet field-tested on a real device.

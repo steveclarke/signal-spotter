@@ -47,6 +47,7 @@ fun MainScreen(modifier: Modifier = Modifier, viewModel: MainViewModel = viewMod
 
   val permissions = remember { requiredPermissions() }
   var pendingStart by remember { mutableStateOf(false) }
+  var showMap by remember { mutableStateOf(false) }
 
   val launcher =
     rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
@@ -90,6 +91,7 @@ fun MainScreen(modifier: Modifier = Modifier, viewModel: MainViewModel = viewMod
         modifier = Modifier.weight(1f),
         style = MaterialTheme.typography.titleMedium,
       )
+      TextButton(onClick = { showMap = !showMap }) { Text(if (showMap) "List" else "Map") }
       TextButton(onClick = { shareSpotsAsGpx(context, spots) }, enabled = spots.isNotEmpty()) {
         Text("Export GPX")
       }
@@ -98,16 +100,18 @@ fun MainScreen(modifier: Modifier = Modifier, viewModel: MainViewModel = viewMod
 
     HorizontalDivider()
 
-    if (spots.isEmpty()) {
-      Text(
-        "No spots yet. Tap Start, then drive. Each time your phone grabs a signal, " +
-          "the spot shows up here.",
-        style = MaterialTheme.typography.bodyMedium,
-      )
-    } else {
-      LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(spots.reversed()) { spot -> SpotRow(spot) }
-      }
+    when {
+      showMap -> SpotsMap(spots, modifier = Modifier.fillMaxWidth().weight(1f))
+      spots.isEmpty() ->
+        Text(
+          "No spots yet. Tap Start, then drive. Each time your phone grabs a signal, " +
+            "the spot shows up here.",
+          style = MaterialTheme.typography.bodyMedium,
+        )
+      else ->
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+          items(spots.reversed()) { spot -> SpotRow(spot) }
+        }
     }
   }
 }

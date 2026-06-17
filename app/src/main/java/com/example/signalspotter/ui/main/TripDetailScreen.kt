@@ -103,7 +103,11 @@ fun TripDetailScreen(
           modifier = Modifier.padding(horizontal = 18.dp),
         )
       } else if (showMap) {
-        SpotsMap(trip.spots, modifier = Modifier.fillMaxSize().padding(horizontal = 18.dp))
+        SpotsMap(
+          trip.spots,
+          modifier =
+            Modifier.fillMaxSize().padding(horizontal = 18.dp).clip(RoundedCornerShape(16.dp)),
+        )
       } else {
         LazyColumn(
           Modifier.fillMaxSize().padding(horizontal = 18.dp),

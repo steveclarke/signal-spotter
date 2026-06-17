@@ -53,11 +53,13 @@ fun SpotsMap(
   DisposableEffect(track, spots) {
     mapView.overlays.clear()
 
+    val cleaned = cleanTrack(track)
+
     // Path first, so the spot markers draw on top of it.
-    if (track.size >= 2) {
+    if (cleaned.size >= 2) {
       mapView.overlays.add(
         Polyline(mapView).apply {
-          setPoints(track.map { GeoPoint(it.latitude, it.longitude) })
+          setPoints(cleaned.map { GeoPoint(it.latitude, it.longitude) })
           outlinePaint.color = AndroidColor.parseColor("#16A34A")
           outlinePaint.strokeWidth = 10f
           outlinePaint.strokeCap = Paint.Cap.ROUND
@@ -79,7 +81,7 @@ fun SpotsMap(
     }
 
     val points =
-      track.map { GeoPoint(it.latitude, it.longitude) } +
+      cleaned.map { GeoPoint(it.latitude, it.longitude) } +
         spots.map { GeoPoint(it.latitude, it.longitude) }
     mapView.post { frameCamera(mapView, points) }
     mapView.invalidate()
@@ -87,6 +89,33 @@ fun SpotsMap(
   }
 
   AndroidView(factory = { mapView }, modifier = modifier.clipToBounds())
+}
+
+/**
+ * Drops GPS spikes from a track so the line follows the real path. Modern points
+ * carry accuracy (already filtered when recorded), so we only need a gentle
+ * speed cap; legacy points (accuracy unknown) get an aggressive walk-speed cap.
+ */
+private fun cleanTrack(track: List<TrackPoint>): List<TrackPoint> {
+  if (track.size < 3) return track
+  val maxSpeed = if (track.any { it.accuracyMeters > 0f }) 40.0 else 10.0
+  val out = ArrayList<TrackPoint>(track.size)
+  out.add(track[0])
+  val results = FloatArray(1)
+  for (i in 1 until track.size) {
+    val prev = out.last()
+    val dt = (track[i].timestampMillis - prev.timestampMillis) / 1000.0
+    if (dt <= 0) continue
+    android.location.Location.distanceBetween(
+      prev.latitude,
+      prev.longitude,
+      track[i].latitude,
+      track[i].longitude,
+      results,
+    )
+    if (results[0] / dt <= maxSpeed) out.add(track[i])
+  }
+  return out
 }
 
 private fun frameCamera(map: MapView, points: List<GeoPoint>) {

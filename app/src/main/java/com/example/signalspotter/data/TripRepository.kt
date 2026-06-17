@@ -92,9 +92,9 @@ class TripRepository(context: Context) {
 
   /** Appends a breadcrumb to the active trip. Persistence is throttled (~10s) to keep disk I/O low; the final point is flushed on [endActiveTrip]. */
   @Synchronized
-  fun addTrackPoint(lat: Double, lon: Double, atMillis: Long) {
+  fun addTrackPoint(lat: Double, lon: Double, accuracyM: Float, atMillis: Long) {
     val active = _activeTrip.value ?: return
-    val point = TrackPoint(lat, lon, atMillis)
+    val point = TrackPoint(lat, lon, atMillis, accuracyM)
     val updated =
       _trips.value.map { if (it.id == active.id) it.copy(track = it.track + point) else it }
     val persist = atMillis - lastTrackPersistMillis >= 10_000L

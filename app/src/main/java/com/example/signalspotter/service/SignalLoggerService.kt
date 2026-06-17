@@ -56,14 +56,21 @@ class SignalLoggerService : Service() {
       maybeAddTrackPoint(location)
     }
 
-  /** Records a breadcrumb when we've moved far enough since the last one. */
+  /** Records a breadcrumb when the fix is trustworthy and we've moved far enough. */
   private fun maybeAddTrackPoint(loc: Location) {
+    // Drop low-confidence fixes at the source — this is what kills GPS spikes.
+    if (loc.hasAccuracy() && loc.accuracy > TRACK_MAX_ACCURACY_M) return
     if (hasTrackPoint) {
       val results = FloatArray(1)
       Location.distanceBetween(lastTrackLat, lastTrackLon, loc.latitude, loc.longitude, results)
       if (results[0] < TRACK_MIN_DISTANCE_M) return
     }
-    repository.addTrackPoint(loc.latitude, loc.longitude, System.currentTimeMillis())
+    repository.addTrackPoint(
+      loc.latitude,
+      loc.longitude,
+      if (loc.hasAccuracy()) loc.accuracy else 0f,
+      System.currentTimeMillis(),
+    )
     lastTrackLat = loc.latitude
     lastTrackLon = loc.longitude
     hasTrackPoint = true
@@ -224,6 +231,7 @@ class SignalLoggerService : Service() {
     private const val NOTIFICATION_ID = 1
     private const val LOCATION_INTERVAL_MS = 3000L
     private const val TRACK_MIN_DISTANCE_M = 12f
+    private const val TRACK_MAX_ACCURACY_M = 25f
 
     fun start(context: Context) {
       ContextCompat.startForegroundService(

@@ -18,4 +18,9 @@ data class Trip(
 
 /** A breadcrumb along the path travelled (recorded continuously while logging). */
 @Serializable
-data class TrackPoint(val latitude: Double, val longitude: Double, val timestampMillis: Long)
+data class TrackPoint(
+  val latitude: Double,
+  val longitude: Double,
+  val timestampMillis: Long,
+  val accuracyMeters: Float = 0f,
+)

@@ -8,8 +8,8 @@ import java.io.File
 
 /** Writes a trip's spots to a GPX file in cache and launches a share chooser. */
 fun shareTripAsGpx(context: Context, trip: Trip, displayName: String) {
-  if (trip.spots.isEmpty()) return
-  val gpx = GpxExporter.build(trip.spots)
+  if (trip.spots.isEmpty() && trip.track.isEmpty()) return
+  val gpx = GpxExporter.build(trip.spots, trip.track)
   val dir = File(context.cacheDir, "exports").apply { mkdirs() }
   val safe = displayName.replace(Regex("[^A-Za-z0-9]+"), "-").trim('-').ifEmpty { "trip" }
   val file = File(dir, "signal-spotter-$safe.gpx")

@@ -95,18 +95,26 @@ fun TripDetailScreen(
     Spacer(Modifier.height(14.dp))
 
     Box(Modifier.weight(1f).fillMaxWidth()) {
-      if (trip.spots.isEmpty()) {
+      if (trip.spots.isEmpty() && trip.track.isEmpty()) {
         Text(
-          "No spots were logged on this trip — you stayed in (or out of) coverage the whole time.",
+          "Nothing was recorded on this trip — no path and no signal spots.",
           style = MaterialTheme.typography.bodyMedium,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           modifier = Modifier.padding(horizontal = 18.dp),
         )
       } else if (showMap) {
         SpotsMap(
-          trip.spots,
+          spots = trip.spots,
+          track = trip.track,
           modifier =
             Modifier.fillMaxSize().padding(horizontal = 18.dp).clip(RoundedCornerShape(16.dp)),
+        )
+      } else if (trip.spots.isEmpty()) {
+        Text(
+          "No signal spots on this trip — switch to Map to see the path you travelled.",
+          style = MaterialTheme.typography.bodyMedium,
+          color = MaterialTheme.colorScheme.onSurfaceVariant,
+          modifier = Modifier.padding(horizontal = 18.dp),
         )
       } else {
         LazyColumn(
@@ -125,7 +133,7 @@ fun TripDetailScreen(
     ) {
       Button(
         onClick = { shareTripAsGpx(context, trip, trip.displayTitle()) },
-        enabled = trip.spots.isNotEmpty(),
+        enabled = trip.spots.isNotEmpty() || trip.track.isNotEmpty(),
         modifier = Modifier.weight(1f).height(48.dp),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Green),

@@ -10,7 +10,12 @@ data class Trip(
   val endedAtMillis: Long? = null,
   val label: String? = null,
   val spots: List<LoggedSpot> = emptyList(),
+  val track: List<TrackPoint> = emptyList(),
 ) {
   val isActive: Boolean
     get() = endedAtMillis == null
 }
+
+/** A breadcrumb along the path travelled (recorded continuously while logging). */
+@Serializable
+data class TrackPoint(val latitude: Double, val longitude: Double, val timestampMillis: Long)

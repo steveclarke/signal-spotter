@@ -61,12 +61,14 @@ class TripRepository(context: Context) {
     commit(loaded)
   }
 
+  private var lastTrackPersistMillis = 0L
+
   @Synchronized
-  private fun commit(list: List<Trip>) {
+  private fun commit(list: List<Trip>, persist: Boolean = true) {
     val sorted = list.sortedByDescending { it.startedAtMillis }
     _trips.value = sorted
     _activeTrip.value = sorted.firstOrNull { it.isActive }
-    runCatching { file.writeText(json.encodeToString(sorted)) }
+    if (persist) runCatching { file.writeText(json.encodeToString(sorted)) }
   }
 
   @Synchronized
@@ -86,6 +88,18 @@ class TripRepository(context: Context) {
   fun addSpot(spot: LoggedSpot) {
     val active = _activeTrip.value ?: return
     commit(_trips.value.map { if (it.id == active.id) it.copy(spots = it.spots + spot) else it })
+  }
+
+  /** Appends a breadcrumb to the active trip. Persistence is throttled (~10s) to keep disk I/O low; the final point is flushed on [endActiveTrip]. */
+  @Synchronized
+  fun addTrackPoint(lat: Double, lon: Double, atMillis: Long) {
+    val active = _activeTrip.value ?: return
+    val point = TrackPoint(lat, lon, atMillis)
+    val updated =
+      _trips.value.map { if (it.id == active.id) it.copy(track = it.track + point) else it }
+    val persist = atMillis - lastTrackPersistMillis >= 10_000L
+    if (persist) lastTrackPersistMillis = atMillis
+    commit(updated, persist = persist)
   }
 
   @Synchronized

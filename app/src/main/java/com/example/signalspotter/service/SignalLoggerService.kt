@@ -40,6 +40,10 @@ class SignalLoggerService : Service() {
   private var inService: Boolean = true
   private var firstStateSeen: Boolean = false
 
+  private var hasTrackPoint = false
+  private var lastTrackLat = 0.0
+  private var lastTrackLon = 0.0
+
   private val locationListener =
     LocationListener { location ->
       lastLocation = location
@@ -49,7 +53,21 @@ class SignalLoggerService : Service() {
         location.accuracy,
         System.currentTimeMillis(),
       )
+      maybeAddTrackPoint(location)
     }
+
+  /** Records a breadcrumb when we've moved far enough since the last one. */
+  private fun maybeAddTrackPoint(loc: Location) {
+    if (hasTrackPoint) {
+      val results = FloatArray(1)
+      Location.distanceBetween(lastTrackLat, lastTrackLon, loc.latitude, loc.longitude, results)
+      if (results[0] < TRACK_MIN_DISTANCE_M) return
+    }
+    repository.addTrackPoint(loc.latitude, loc.longitude, System.currentTimeMillis())
+    lastTrackLat = loc.latitude
+    lastTrackLon = loc.longitude
+    hasTrackPoint = true
+  }
 
   private val repository
     get() = (application as SignalSpotterApp).repository
@@ -65,6 +83,7 @@ class SignalLoggerService : Service() {
     repository.resetDebug()
     repository.startTrip(System.currentTimeMillis())
     repository.setLogging(true)
+    hasTrackPoint = false
     startLocationUpdates()
     startTelephonyMonitoring()
     return START_STICKY
@@ -204,6 +223,7 @@ class SignalLoggerService : Service() {
     private const val CHANNEL_ID = "signal_logging"
     private const val NOTIFICATION_ID = 1
     private const val LOCATION_INTERVAL_MS = 3000L
+    private const val TRACK_MIN_DISTANCE_M = 12f
 
     fun start(context: Context) {
       ContextCompat.startForegroundService(

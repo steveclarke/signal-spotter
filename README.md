@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="brand/svg/logo-horizontal-color.svg" width="320" alt="Signal Spotter">
+</p>
+
 # Signal Spotter
 
 A small Android app that logs where your phone **regains cell service** while you

@@ -8,7 +8,8 @@ import com.example.signalspotter.service.SignalLoggerService
 class MainViewModel(app: Application) : AndroidViewModel(app) {
   private val repository = (app as SignalSpotterApp).repository
 
-  val spots = repository.spots
+  val trips = repository.trips
+  val activeTrip = repository.activeTrip
   val isLogging = repository.isLogging
   val debug = repository.debug
 
@@ -16,5 +17,7 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
 
   fun stopLogging() = SignalLoggerService.stop(getApplication())
 
-  fun clear() = repository.clear()
+  fun rename(id: Long, label: String?) = repository.rename(id, label)
+
+  fun delete(id: Long) = repository.delete(id)
 }

@@ -1,18 +1,18 @@
 package com.example.signalspotter
 
 import android.app.Application
-import com.example.signalspotter.data.SpotRepository
+import com.example.signalspotter.data.TripRepository
 import org.osmdroid.config.Configuration
 import java.io.File
 
-/** Owns the single app-wide [SpotRepository]. Registered in the manifest. */
+/** Owns the single app-wide [TripRepository]. Registered in the manifest. */
 class SignalSpotterApp : Application() {
-  lateinit var repository: SpotRepository
+  lateinit var repository: TripRepository
     private set
 
   override fun onCreate() {
     super.onCreate()
-    repository = SpotRepository(this)
+    repository = TripRepository(this)
 
     // osmdroid: identify ourselves to tile servers and keep tiles in private cache.
     Configuration.getInstance().apply {

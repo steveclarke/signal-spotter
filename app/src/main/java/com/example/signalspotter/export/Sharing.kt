@@ -3,29 +3,27 @@ package com.example.signalspotter.export
 import android.content.Context
 import android.content.Intent
 import androidx.core.content.FileProvider
-import com.example.signalspotter.data.LoggedSpot
+import com.example.signalspotter.data.Trip
 import java.io.File
 
-/** Writes the spots to a GPX file in cache and launches a share chooser. */
-fun shareSpotsAsGpx(context: Context, spots: List<LoggedSpot>) {
-  if (spots.isEmpty()) return
-  val gpx = GpxExporter.build(spots)
+/** Writes a trip's spots to a GPX file in cache and launches a share chooser. */
+fun shareTripAsGpx(context: Context, trip: Trip, displayName: String) {
+  if (trip.spots.isEmpty()) return
+  val gpx = GpxExporter.build(trip.spots)
   val dir = File(context.cacheDir, "exports").apply { mkdirs() }
-  val file = File(dir, "signal-spots.gpx")
+  val safe = displayName.replace(Regex("[^A-Za-z0-9]+"), "-").trim('-').ifEmpty { "trip" }
+  val file = File(dir, "signal-spotter-$safe.gpx")
   file.writeText(gpx)
 
-  val uri =
-    FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+  val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
   val intent =
     Intent(Intent.ACTION_SEND).apply {
       type = "application/gpx+xml"
       putExtra(Intent.EXTRA_STREAM, uri)
-      putExtra(Intent.EXTRA_SUBJECT, "Signal Spotter coverage spots")
+      putExtra(Intent.EXTRA_SUBJECT, "Signal Spotter — $displayName")
       addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
   context.startActivity(
-    Intent.createChooser(intent, "Share GPX").apply {
-      addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-    }
+    Intent.createChooser(intent, "Share GPX").apply { addFlags(Intent.FLAG_ACTIVITY_NEW_TASK) }
   )
 }

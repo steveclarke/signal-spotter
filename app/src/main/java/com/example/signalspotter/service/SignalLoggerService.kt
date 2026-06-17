@@ -62,8 +62,9 @@ class SignalLoggerService : Service() {
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     startForeground(NOTIFICATION_ID, buildNotification())
-    repository.setLogging(true)
     repository.resetDebug()
+    repository.startTrip(System.currentTimeMillis())
+    repository.setLogging(true)
     startLocationUpdates()
     startTelephonyMonitoring()
     return START_STICKY
@@ -151,7 +152,7 @@ class SignalLoggerService : Service() {
   private fun logCurrentSpot() {
     val loc = lastLocation ?: return
     val carrier = carrierName()
-    repository.add(
+    repository.addSpot(
       LoggedSpot(
         timestampMillis = System.currentTimeMillis(),
         latitude = loc.latitude,
@@ -169,6 +170,7 @@ class SignalLoggerService : Service() {
     phoneStateListener?.let {
       telephonyManager.listen(it, android.telephony.PhoneStateListener.LISTEN_NONE)
     }
+    repository.endActiveTrip(System.currentTimeMillis())
     repository.setLogging(false)
     super.onDestroy()
   }
